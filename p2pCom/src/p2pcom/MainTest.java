@@ -15,7 +15,7 @@ public class MainTest {
 	public static void main(String[] args) throws Exception {
 		String filepath="G:/tmp/";
 
-		//RSAEncrypt.genKeyPair(filepath);
+		RSAEncrypt.genKeyPair(filepath);
 		
 		
 		System.out.println("--------------公钥加密私钥解密过程-------------------");

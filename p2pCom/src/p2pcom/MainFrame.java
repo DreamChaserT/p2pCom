@@ -9,6 +9,8 @@ import java.awt.Color;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -28,13 +30,23 @@ public class MainFrame extends javax.swing.JFrame {
                 while(true){
                     List<String> res=ComTool.receMessage();
                     if(null!=res){
-                        //数据校验
-                        
-                        //显示接收到的数据
-                        SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                        area_message.append(res.get(0)+"  ("+sdf.format(new Date())+") :\n"
-                        +res.get(1)+"\n"
-                        +"=======================================================\n");
+                        try {
+                            //数据校验
+                            String receMessage_tmp=
+                                    new String(RSAEncrypt.decrypt(RSAEncrypt.loadPrivateKeyByStr(Config.rece_r), Base64.decode(res.get(1))));
+                            String receMessage=
+                                    new String(RSAEncrypt.decrypt(RSAEncrypt.loadPublicKeyByStr(Config.rece_p), Base64.decode(receMessage_tmp)));
+                            
+                            //test
+                            //System.out.println("result:"+receMessage);
+                            //显示接收到的数据
+                            SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                            area_message.append(res.get(0)+"  ("+sdf.format(new Date())+") :\n"
+                                    +receMessage+"\n"
+                                            +"=======================================================\n");
+                        } catch (Exception ex) {
+                            Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+                        }
                     }
                 }
             }
@@ -177,35 +189,49 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_btn_resetActionPerformed
 
     private void btn_sendActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_sendActionPerformed
-        //检测发送内容是否为空
-        if(area_send.getText().equals("")){
-            label_state.setForeground(Color.red);
-            label_state.setText("发送内容不能为空");
-            return;
-        }
-        //检测ip地址是否正确
-        if(!IpTool.isValidIP(text_ipaddress.getText())){
-            label_state.setForeground(Color.red);
-            label_state.setText("ip地址格式错误");
-            return;
-        }
-        if(!IpTool.isPing(text_ipaddress.getText())){
-            label_state.setForeground(Color.red);
-            label_state.setText("ip地址无法访问");
-            return;
-        }
-        
-        //数据处理
-        
-        //发送数据
-        if(ComTool.sendMessage(area_send.getText(), text_ipaddress.getText())){
-            area_send.setText("");
-            label_state.setForeground(Color.green);
-            label_state.setText("发送成功");
-        }
-        else{
-            label_state.setForeground(Color.red);
-            label_state.setText("发送失败");
+        try {
+            //检测发送内容是否为空
+            if(area_send.getText().equals("")){
+                label_state.setForeground(Color.red);
+                label_state.setText("发送内容不能为空");
+                return;
+            }
+            //检测ip地址是否正确
+            if(!IpTool.isValidIP(text_ipaddress.getText())){
+                label_state.setForeground(Color.red);
+                label_state.setText("ip地址格式错误");
+                return;
+            }
+            if(!IpTool.isPing(text_ipaddress.getText())){
+                label_state.setForeground(Color.red);
+                label_state.setText("ip地址无法访问");
+                return;
+            }
+            
+            //数据处理
+            String sendMessage_tmp=
+                    Base64.encode(RSAEncrypt.encrypt(RSAEncrypt.loadPrivateKeyByStr(Config.send_r), area_send.getText().getBytes()));
+            String sendMessage=
+                    Base64.encode(RSAEncrypt.encrypt(RSAEncrypt.loadPublicKeyByStr(Config.send_p),sendMessage_tmp.getBytes()));
+            
+            //test
+            //System.out.println("result:"+sendMessage);
+            
+            //测试篡改
+            //sendMessage=sendMessage.replace('a', 'b');
+            
+            //发送数据
+            if(ComTool.sendMessage(sendMessage, text_ipaddress.getText())){
+                area_send.setText("");
+                label_state.setForeground(Color.green);
+                label_state.setText("发送成功");
+            }
+            else{
+                label_state.setForeground(Color.red);
+                label_state.setText("发送失败");
+            }
+        } catch (Exception ex) {
+            Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_btn_sendActionPerformed
 
