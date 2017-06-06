@@ -5,6 +5,11 @@
  */
 package p2pcom;
 
+import java.awt.Color;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+
 /**
  *
  * @author Cmglz
@@ -16,6 +21,27 @@ public class MainFrame extends javax.swing.JFrame {
      */
     public MainFrame() {
         initComponents();
+        //开启接收消息线程
+        new Thread(new Runnable(){
+            @Override
+            public void run() {
+                while(true){
+                    List<String> res=ComTool.receMessage();
+                    if(null!=res){
+                        //数据校验
+                        
+                        //显示接收到的数据
+                        SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                        area_message.append(res.get(0)+"  ("+sdf.format(new Date())+") :\n"
+                        +res.get(1)+"\n"
+                        +"=======================================================\n");
+                    }
+                }
+            }
+            
+        }).start();
+        //刷新ip
+        label_ipaddress.setText(IpTool.getLocalIp());
     }
 
     /**
@@ -48,6 +74,11 @@ public class MainFrame extends javax.swing.JFrame {
         label_ipaddress.setText("获取失败");
 
         btn_refresh.setText("刷新");
+        btn_refresh.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn_refreshActionPerformed(evt);
+            }
+        });
 
         jLabel2.setText("目标IP:");
 
@@ -55,17 +86,30 @@ public class MainFrame extends javax.swing.JFrame {
 
         label_state.setText("创建完毕");
 
+        area_message.setEditable(false);
         area_message.setColumns(20);
+        area_message.setLineWrap(true);
         area_message.setRows(5);
         jScrollPane1.setViewportView(area_message);
 
         area_send.setColumns(20);
+        area_send.setLineWrap(true);
         area_send.setRows(5);
         jScrollPane2.setViewportView(area_send);
 
         btn_send.setText("发送");
+        btn_send.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn_sendActionPerformed(evt);
+            }
+        });
 
         btn_reset.setText("重置");
+        btn_reset.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn_resetActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -89,21 +133,20 @@ public class MainFrame extends javax.swing.JFrame {
                             .addComponent(label_state, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 170, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 136, Short.MAX_VALUE)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(btn_refresh, javax.swing.GroupLayout.Alignment.TRAILING)
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                                 .addComponent(btn_reset)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(btn_send)))))
+                                .addComponent(btn_send))
+                            .addComponent(btn_refresh, javax.swing.GroupLayout.Alignment.TRAILING))))
                 .addGap(31, 31, 31))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel1)
-                        .addComponent(label_ipaddress))
+                .addContainerGap(27, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel1)
+                    .addComponent(label_ipaddress)
                     .addComponent(btn_refresh))
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -113,7 +156,7 @@ public class MainFrame extends javax.swing.JFrame {
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(38, 38, 38)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 41, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 24, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(label_state)
                     .addComponent(btn_send)
@@ -123,6 +166,48 @@ public class MainFrame extends javax.swing.JFrame {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void btn_refreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_refreshActionPerformed
+        //刷新ip
+        label_ipaddress.setText(IpTool.getLocalIp());
+    }//GEN-LAST:event_btn_refreshActionPerformed
+
+    private void btn_resetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_resetActionPerformed
+        area_send.setText("");
+    }//GEN-LAST:event_btn_resetActionPerformed
+
+    private void btn_sendActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_sendActionPerformed
+        //检测发送内容是否为空
+        if(area_send.getText().equals("")){
+            label_state.setForeground(Color.red);
+            label_state.setText("发送内容不能为空");
+            return;
+        }
+        //检测ip地址是否正确
+        if(!IpTool.isValidIP(text_ipaddress.getText())){
+            label_state.setForeground(Color.red);
+            label_state.setText("ip地址格式错误");
+            return;
+        }
+        if(!IpTool.isPing(text_ipaddress.getText())){
+            label_state.setForeground(Color.red);
+            label_state.setText("ip地址无法访问");
+            return;
+        }
+        
+        //数据处理
+        
+        //发送数据
+        if(ComTool.sendMessage(area_send.getText(), text_ipaddress.getText())){
+            area_send.setText("");
+            label_state.setForeground(Color.green);
+            label_state.setText("发送成功");
+        }
+        else{
+            label_state.setForeground(Color.red);
+            label_state.setText("发送失败");
+        }
+    }//GEN-LAST:event_btn_sendActionPerformed
 
     /**
      * @param args the command line arguments
